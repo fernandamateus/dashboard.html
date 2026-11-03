@@ -1,1 +1,108 @@
-<!DOCTYPE html> <html lang="pt-BR"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>GMP+ FSA Monitoring</title> <style> * { box-sizing: border-box; } body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; background: #f5f5f5; color: #333; } .container { max-width: 1200px; margin: 0 auto; padding: 20px; } h1 { font-size: 28px; margin: 0 0 10px 0; } .meta { font-size: 13px; color: #666; margin-bottom: 20px; } .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; } .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; } .card-num { font-size: 32px; font-weight: 600; color: #1f7a4d; } .card-label { font-size: 13px; color: #666; margin-top: 10px; } table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); } th { background: #f9f9f9; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0; } td { padding: 12px; border-bottom: 1px solid #e0e0e0; } tr:hover { background: #fafafa; } .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; } .badge-ok { background: #e7f5ec; color: #1f7a4d; } .badge-novo { background: #e8f0fb; color: #1a5fa8; } .search-box { margin-bottom: 20px; } input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; } .empty { text-align: center; padding: 40px; color: #999; } </style> </head> <body> <div class="container"> <h1>GMP+ FSA Monitoring Dashboard</h1> <div class="meta"> Ultima verificacao: <strong id="ultima-data">-</strong> | Proximo dia 5 do mes </div> <div class="cards"> <div class="card"> <div class="card-num" id="total-docs">-</div> <div class="card-label">Documentos</div> </div> <div class="card"> <div class="card-num" id="total-alterados">-</div> <div class="card-label">Alterados</div> </div> <div class="card"> <div class="card-num" id="total-noticias">-</div> <div class="card-label">Noticias</div> </div> </div> <div class="search-box"> <input type="text" id="busca" placeholder="Buscar documento..."> </div> <h2>Documentos</h2> <table id="tabela-docs"> <thead> <tr> <th>Codigo</th> <th>Documento</th> <th>Versao</th> <th>Status</th> </tr> </thead> <tbody id="tabela-docs-body"></tbody> </table> <div class="empty" id="vazio-docs" style="display:none;">Nenhum documento encontrado</div> <h2 style="margin-top: 40px;">Noticias</h2> <div id="noticias-container"></div> <div class="empty" id="vazio-noticias" style="display:none;">Nenhuma noticia encontrada</div> </div> <script> let DATA = {}; fetch('data.json') .then(r => r.json()) .then(d => { DATA = d; renderizar(); }) .catch(e => { console.log(e); DATA = {"documents":[],"news_items":[],"change_log":[]}; renderizar(); }); function renderizar() { const docs = DATA.documents || []; const news = DATA.news_items || []; const alterados = new Set((DATA.change_log || []).filter(c => c.detected_at === DATA.last_checked).map(c => c.code)); document.getElementById('ultima-data').textContent = DATA.last_checked || '-'; document.getElementById('total-docs').textContent = docs.length; document.getElementById('total-alterados').textContent = alterados.size; document.getElementById('total-noticias').textContent = news.length; const busca = document.getElementById('busca').value.toLowerCase(); const docsFiltrados = docs.filter(d => d.code.toLowerCase().includes(busca) || d.title.toLowerCase().includes(busca)); const tbody = document.getElementById('tabela-docs-body'); tbody.innerHTML = docsFiltrados.map(d => ` <tr> <td><strong>${d.code}</strong></td> <td>${d.title}</td> <td>${d.version}</td> <td><span class="badge ${alterados.has(d.code) ? 'badge-novo' : 'badge-ok'}">${alterados.has(d.code) ? 'NOVO' : 'OK'}</span></td> </tr> `).join(''); document.getElementById('vazio-docs').style.display = docsFiltrados.length ? 'none' : 'block'; const noticiasHtml = news.slice(0, 20).map(n => ` <div style="padding:12px; border-bottom:1px solid #eee;"> <a href="${n.url}" target="_blank" style="color:#1a5fa8; text-decoration:none;">${n.title}</a> <div style="font-size:12px; color:#999; margin-top:4px;">${n.date_published}</div> </div> `).join(''); const noticiasContainer = document.getElementById('noticias-container'); noticiasContainer.innerHTML = noticiasHtml || '<div class="empty">Sem noticias</div>'; document.getElementById('vazio-noticias').style.display = news.length ? 'none' : 'block'; } document.getElementById('busca').addEventListener('input', renderizar); </script> </body> </html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GMP+ FSA Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; background: #f5f5f5; color: #333; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 28px; margin: 0 0 10px 0; }
+    .meta { font-size: 13px; color: #666; margin-bottom: 20px; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+    .card-num { font-size: 32px; font-weight: 600; color: #1f7a4d; }
+    .card-label { font-size: 13px; color: #666; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    th { background: #f9f9f9; padding: 12px; text-align: left; font-size: 12px; font-weight: 600; color: #666; border-bottom: 1px solid #e0e0e0; }
+    td { padding: 12px; border-bottom: 1px solid #e0e0e0; }
+    tr:hover { background: #fafafa; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-ok { background: #e7f5ec; color: #1f7a4d; }
+    .badge-novo { background: #e8f0fb; color: #1a5fa8; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 20px; }
+    .empty { text-align: center; padding: 40px; color: #999; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GMP+ FSA Dashboard</h1>
+    <div class="meta">Última verificação: <strong id="ultima-data">-</strong></div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-num" id="total-docs">-</div>
+        <div class="card-label">Documentos</div>
+      </div>
+      <div class="card">
+        <div class="card-num" id="total-alterados">-</div>
+        <div class="card-label">Alterados</div>
+      </div>
+      <div class="card">
+        <div class="card-num" id="total-noticias">-</div>
+        <div class="card-label">Notícias</div>
+      </div>
+    </div>
+
+    <input type="text" id="busca" placeholder="Buscar documento...">
+
+    <h2>Documentos</h2>
+    <table id="tabela-docs">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Documento</th>
+          <th>Versão</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-docs-body"></tbody>
+    </table>
+    <div class="empty" id="vazio-docs" style="display:none;">Nenhum documento</div>
+
+    <h2 style="margin-top: 40px;">Notícias</h2>
+    <div id="noticias-container"></div>
+  </div>
+
+  <script>
+    let DATA = {};
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(d => { DATA = d; renderizar(); })
+      .catch(e => { console.log(e); renderizar(); });
+
+    function renderizar() {
+      const docs = DATA.documents || [];
+      const news = DATA.news_items || [];
+
+      document.getElementById('ultima-data').textContent = DATA.last_checked || '-';
+      document.getElementById('total-docs').textContent = docs.length;
+      document.getElementById('total-alterados').textContent = (DATA.change_log || []).length;
+      document.getElementById('total-noticias').textContent = news.length;
+
+      const busca = document.getElementById('busca').value.toLowerCase();
+      const filtered = docs.filter(d => (d.code + d.title).toLowerCase().includes(busca));
+
+      document.getElementById('tabela-docs-body').innerHTML = filtered.map(d => `
+        <tr>
+          <td><strong>${d.code}</strong></td>
+          <td>${d.title}</td>
+          <td>${d.version}</td>
+          <td><span class="badge badge-ok">OK</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('noticias-container').innerHTML = news.slice(0, 10).map(n => `
+        <div style="padding:12px; border-bottom:1px solid #eee;">
+          <a href="${n.url}" target="_blank" style="color:#1a5fa8; text-decoration:none;">${n.title}</a>
+          <div style="font-size:12px; color:#999; margin-top:4px;">${n.date_published}</div>
+        </div>
+      `).join('');
+    }
+
+    document.getElementById('busca').addEventListener('input', renderizar);
+  </script>
+</body>
+</html>
